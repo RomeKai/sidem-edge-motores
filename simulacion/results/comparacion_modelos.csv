@@ -1,0 +1,11 @@
+Modelo,Fallas detectadas,Fallas no detectadas,Falsas alarmas,Precisión,Recall,Falsas alarmas/motor/año,Anticipación media [h]
+"No supervisado (edge, z=3)",161,65,965,0.143,0.712,28.8,35.0
+"No supervisado (edge, z=4)",97,129,634,0.133,0.429,18.9,29.3
+Supervisado telemetría (p>0.5),216,10,2315,0.085,0.956,69.1,42.7
+Supervisado telemetría (p>0.7),223,3,2137,0.094,0.987,63.8,40.7
+Supervisado telemetría (p>0.9),199,27,1645,0.108,0.881,49.1,33.6
+Supervisado telemetría (p>0.95),39,187,91,0.3,0.173,2.7,22.7
+Supervisado completo (p>0.5),192,34,564,0.254,0.85,16.8,45.8
+Supervisado completo (p>0.7),208,18,297,0.412,0.92,8.9,45.4
+Supervisado completo (p>0.9),222,4,131,0.629,0.982,3.9,43.3
+Supervisado completo (p>0.95),226,0,71,0.761,1.0,2.1,41.7

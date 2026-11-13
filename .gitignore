@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Dataset (downloaded with simulacion/download_data.py)
+simulacion/data/*.csv
+simulacion/data/*.part
+
+# Generated locally
+simulacion/results/dashboard.html
+
+# Office lock files
+~$*
+
+# Local tooling
+.atl/
+.claude/
+
+# Not part of the project (npm "pandas" is an unrelated JS package)
+node_modules/
+simulacion/package.json
+simulacion/package-lock.json

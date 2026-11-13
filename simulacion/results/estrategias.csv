@@ -1,0 +1,5 @@
+Estrategia,Fallas no planificadas,Intervenciones planificadas,Horas de parada,Costo total [USD],Ahorro vs. correctivo
+Correctivo,883,0,21192.0,5562900.0,0%
+Preventivo,679,466,18160.0,4836900.0,13%
+Predictivo,552,1278,7467.0,2098200.0,62%
+Prescriptivo,538,816,5616.0,1607850.0,71%

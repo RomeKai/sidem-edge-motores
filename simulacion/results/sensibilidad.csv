@@ -1,0 +1,33 @@
+escenario,falsas_alarmas_por_anio,estrategia,ahorro_vs_correctivo
+optimista,0,Predictivo,0.685
+optimista,0,Prescriptivo,0.733
+optimista,1,Predictivo,0.623
+optimista,1,Prescriptivo,0.711
+optimista,2,Predictivo,0.574
+optimista,2,Prescriptivo,0.67
+optimista,5,Predictivo,0.417
+optimista,5,Prescriptivo,0.598
+optimista,10,Predictivo,0.152
+optimista,10,Prescriptivo,0.466
+optimista,15,Predictivo,-0.115
+optimista,15,Prescriptivo,0.333
+optimista,20,Predictivo,-0.387
+optimista,20,Prescriptivo,0.201
+optimista,27,Predictivo,-0.762
+optimista,27,Prescriptivo,0.013
+calibrado Azure,0,Predictivo,0.621
+calibrado Azure,0,Prescriptivo,0.631
+calibrado Azure,1,Predictivo,0.562
+calibrado Azure,1,Prescriptivo,0.611
+calibrado Azure,2,Predictivo,0.509
+calibrado Azure,2,Prescriptivo,0.572
+calibrado Azure,5,Predictivo,0.351
+calibrado Azure,5,Prescriptivo,0.489
+calibrado Azure,10,Predictivo,0.085
+calibrado Azure,10,Prescriptivo,0.361
+calibrado Azure,15,Predictivo,-0.182
+calibrado Azure,15,Prescriptivo,0.228
+calibrado Azure,20,Predictivo,-0.452
+calibrado Azure,20,Prescriptivo,0.095
+calibrado Azure,27,Predictivo,-0.828
+calibrado Azure,27,Prescriptivo,-0.091

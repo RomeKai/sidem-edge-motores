@@ -1,0 +1,8 @@
+Métrica,Valor
+Desgaste abrupto: paradas dentro del deadline,100% (50/50)
+Desgaste abrupto: retardo de parada máx. [muestras],1 (deadline = 3)
+Desgaste gradual: detección (recall),100%
+Desgaste gradual: salud media al alertar,0.94
+Desgaste gradual: anticipación media antes de estado crítico [min],59
+Operación normal: falsas alertas,0 en 400 h
+Operación normal: paradas en falso,0 en 400 h

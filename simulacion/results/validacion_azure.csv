@@ -1,0 +1,4 @@
+Umbral z,Fallas detectadas,Fallas no detectadas,Falsas alarmas,Precisión,Recall,Anticipación media [h]
+3.0,499,219,2678,0.157,0.695,33.6
+4.0,277,441,1754,0.136,0.386,30.0
+5.0,102,616,566,0.153,0.142,27.1
