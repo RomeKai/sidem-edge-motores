@@ -87,6 +87,7 @@ class Runner:
         self.scripts = scripts
         self.cwd = Path(cwd)
         self._lock = threading.Lock()
+        self._proc = None
         self._state = {"running": False, "name": None, "log": "", "returncode": None,
                        "started": None, "seconds": None}
 
@@ -104,6 +105,13 @@ class Runner:
         threading.Thread(target=self._run, args=(args,), daemon=True).start()
         return True
 
+    def stop(self) -> None:
+        """Terminate the running script, if any (used when the dashboard is closed)."""
+        with self._lock:
+            proc = self._proc
+        if proc and proc.poll() is None:
+            proc.terminate()
+
     def _append(self, text: str) -> None:
         with self._lock:
             self._state["log"] = (self._state["log"] + text)[-LOG_LIMIT:]
@@ -113,17 +121,25 @@ class Runner:
                "MPLBACKEND": "Agg"}
         code = -1
         try:
-            proc = subprocess.Popen([sys.executable, *args], cwd=self.cwd, env=env,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                    text=True, encoding="utf-8", errors="replace")
-            for line in proc.stdout:
-                self._append(line)
-            code = proc.wait()
+            with subprocess.Popen([sys.executable, *args], cwd=self.cwd, env=env,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  text=True, encoding="utf-8", errors="replace") as proc:
+                with self._lock:
+                    self._proc = proc
+                for line in proc.stdout:
+                    self._append(line)
+                code = proc.wait()
         except OSError as exc:
             self._append(f"No se pudo ejecutar: {exc}\n")
         with self._lock:
+            self._proc = None
             self._state.update(running=False, returncode=code,
                                seconds=round(time.time() - self._state["started"], 1))
+
+
+class _Server(ThreadingHTTPServer):
+    allow_reuse_address = False  # on Windows reuse lets a second server share the port silently
+    daemon_threads = True
 
 
 def make_server(results_dir: Path, runner: Runner, port: int = 8765) -> ThreadingHTTPServer:
@@ -132,6 +148,16 @@ def make_server(results_dir: Path, runner: Runner, port: int = 8765) -> Threadin
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):  # keep the terminal clean
             pass
+
+        def _allowed(self) -> bool:
+            """Reject requests from other websites (CSRF) and foreign Host names (DNS rebinding)."""
+            port_ = self.server.server_address[1]
+            hosts = {f"127.0.0.1:{port_}", f"localhost:{port_}"}
+            origin = self.headers.get("Origin")
+            if self.headers.get("Host") in hosts and (not origin or urlparse(origin).netloc in hosts):
+                return True
+            self._send(403, b"Forbidden", "text/plain; charset=utf-8")
+            return False
 
         def _send(self, code: int, body: bytes, ctype: str) -> None:
             self.send_response(code)
@@ -145,6 +171,8 @@ def make_server(results_dir: Path, runner: Runner, port: int = 8765) -> Threadin
             self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
         def do_GET(self):
+            if not self._allowed():
+                return
             path = unquote(urlparse(self.path).path)
             if path in ("/", "/index.html", "/dashboard.html"):
                 return self._send(200, render_html(results_dir, live=True).encode("utf-8"), "text/html; charset=utf-8")
@@ -158,6 +186,8 @@ def make_server(results_dir: Path, runner: Runner, port: int = 8765) -> Threadin
             self._send(404, b"Not found", "text/plain; charset=utf-8")
 
         def do_POST(self):
+            if not self._allowed():
+                return
             path = urlparse(self.path).path
             if not path.startswith("/api/run/"):
                 return self._send(404, b"Not found", "text/plain; charset=utf-8")
@@ -169,7 +199,7 @@ def make_server(results_dir: Path, runner: Runner, port: int = 8765) -> Threadin
                 return self._json(409, {"started": False, "error": "Ya hay un script corriendo"})
             self._json(202, {"started": True})
 
-    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    return _Server(("127.0.0.1", port), Handler)
 
 
 TEMPLATE = r"""<!doctype html>
@@ -715,7 +745,8 @@ def main() -> None:
     if "--build" in sys.argv:
         return
     try:
-        server = make_server(RESULTS, Runner(), port=8765)
+        runner = Runner()
+        server = make_server(RESULTS, runner, port=8765)
     except OSError:
         print("El puerto 8765 está ocupado: ¿ya hay otro tablero abierto? Cerralo o usá --build.")
         return
@@ -728,6 +759,7 @@ def main() -> None:
     except KeyboardInterrupt:
         pass
     finally:
+        runner.stop()
         server.server_close()
         build_dashboard()  # leave the static copy up to date with the last runs
 

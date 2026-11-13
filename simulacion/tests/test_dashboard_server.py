@@ -110,6 +110,42 @@ def test_run_endpoint_starts_known_script_and_rejects_unknown(server):
     assert e.value.code == 404
 
 
+def test_run_from_another_website_is_forbidden(server):
+    base, runner = server
+    req = urllib.request.Request(base + "/api/run/hello", method="POST", data=b"",
+                                 headers={"Origin": "https://evil.example"})
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=5)
+    assert e.value.code == 403
+    assert runner.state()["name"] is None
+
+
+def test_foreign_host_header_is_forbidden(server):
+    base, _ = server
+    req = urllib.request.Request(base + "/api/data", headers={"Host": "rebind.evil.example:8765"})
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=5)
+    assert e.value.code == 403
+
+
+def test_port_already_in_use_is_reported(tmp_path):
+    runner = Runner({}, cwd=tmp_path)
+    first = make_server(tmp_path, runner, port=0)
+    try:
+        with pytest.raises(OSError):
+            make_server(tmp_path, runner, port=first.server_address[1])
+    finally:
+        first.server_close()
+
+
+def test_runner_stop_terminates_running_script(tmp_path):
+    runner = Runner({"slow": ["-c", "import time; time.sleep(30)"]}, cwd=tmp_path)
+    runner.start("slow")
+    time.sleep(0.5)
+    runner.stop()
+    assert _wait_done(runner, timeout=5)["returncode"] != 0
+
+
 def test_static_build_has_runner_disabled(tmp_path):
     from dashboard import build_dashboard
     _write_minimal_results(tmp_path)

@@ -6,6 +6,8 @@ PredictiveMaintenanceModelingGuide). Files are saved as data/PdM_<name>.csv, the
 used by validate_azure.py and compare_models.py. Files already present are skipped.
 """
 
+import functools
+import http.client
 import shutil
 import sys
 import urllib.request
@@ -17,7 +19,7 @@ FILES = ["telemetry", "failures", "errors", "maint", "machines"]
 DATA = Path(__file__).parent / "data"
 
 
-def download(dest: Path = DATA, opener=urllib.request.urlopen) -> list[Path]:
+def download(dest: Path = DATA, opener=functools.partial(urllib.request.urlopen, timeout=60)) -> list[Path]:
     dest = Path(dest)
     dest.mkdir(parents=True, exist_ok=True)
     saved = []
@@ -28,8 +30,12 @@ def download(dest: Path = DATA, opener=urllib.request.urlopen) -> list[Path]:
             continue
         print(f"Descargando {name}.csv ...", flush=True)
         tmp = target.with_suffix(".part")
-        with opener(BASE_URL + f"{name}.csv") as src, open(tmp, "wb") as out:
-            shutil.copyfileobj(src, out)
+        try:
+            with opener(BASE_URL + f"{name}.csv") as src, open(tmp, "wb") as out:
+                shutil.copyfileobj(src, out)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
         tmp.replace(target)
         saved.append(target)
     return saved
@@ -38,6 +44,6 @@ def download(dest: Path = DATA, opener=urllib.request.urlopen) -> list[Path]:
 if __name__ == "__main__":
     try:
         download()
-    except OSError as exc:
+    except (OSError, http.client.HTTPException) as exc:
         sys.exit(f"No se pudo descargar el dataset: {exc}")
     print(f"Dataset listo en {DATA}")
